@@ -7,6 +7,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <dlfcn.h>
+#include "data_struct.h"
 
 int fdread(int fd);
 int fdwrite(int fd);
@@ -20,6 +21,7 @@ int main()
     char str[100];
     int response;
     char response_str[100];
+    message_type msg;
 
     fd_read = fdread(fd_read);
     fd_write = fdwrite(fd_write);
@@ -34,36 +36,38 @@ int main()
 
     while (1)
     {
-        n = read(fd_read, str, 100);
+        n = read(fd_read, &msg, sizeof(msg));
         if (n <= 0)
         {
             perror("read ");
             exit(-1);
         }
-
-        // Remove newline character if present
-        char *newline = strchr(str, '\n');
+        char *newline = strchr(msg.f_name, '\n');
         if (newline)
         {
             *newline = '\0';
         }
-        printf("Received: %s\n", str);
-        // Load f1 from the loaded library
-        fcn = dlsym(lib, str);
+        // Load func from the loaded library
+        fcn = dlsym(lib, msg.f_name);
         if (fcn == NULL)
         {
             printf("Function not found\n");
             continue;
         }
-
-        response = fcn();
+        if (msg.funct_type == 3)
+        {
+            response = fcn(msg.arg);
+        }
+        else
+        {
+            response = fcn();
+        }
 
         sprintf(response_str, "%d", response);
         write(fd_write, response_str, strlen(response_str) + 1);
-        close(fd_read);
-        close(fd_write);
     }
-
+    close(fd_read);
+    close(fd_write);
     printf("fifo aberto\n");
 }
 

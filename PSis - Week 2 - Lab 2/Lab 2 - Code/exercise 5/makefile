@@ -6,13 +6,13 @@ server: server.o funcs.so
 client: client.o
 	gcc -o client client.o
 
-server.o: server.c
+server.o: server.c data_struct.h
 	gcc -c server.c
 
-client.o: client.c
+client.o: client.c data_struct.h
 	gcc -c client.c
 
-funcs.so: funcs.c funcs.h
+funcs.so: funcs.c
 	gcc funcs.c -o funcs.so -ldl -shared -fPIC
 
 clean:

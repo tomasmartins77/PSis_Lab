@@ -5,6 +5,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include "data_struct.h"
+#include <string.h>
 
 int fdread(int fd);
 int fdwrite(int fd);
@@ -15,6 +17,7 @@ int main()
     char str[100];
     char response_str[100];
     int n;
+    message_type msg;
 
     fd_write = fdwrite(fd_write);
     fd_read = fdread(fd_read);
@@ -23,7 +26,35 @@ int main()
     {
         printf("write a function:");
         fgets(str, 100, stdin);
-        write(fd_write, str, 100);
+        strcpy(msg.f_name, str);
+
+        if (str[1] == '1')
+        {
+            msg.funct_type = 1;
+        }
+        else if (str[1] == '2')
+        {
+            msg.funct_type = 2;
+        }
+        else if (str[1] == '3')
+        {
+            msg.funct_type = 3;
+            printf("write an integer:");
+            fgets(str, 100, stdin);
+
+            if (sscanf(str, " %d", &msg.arg) != 1)
+            {
+                printf("Invalid argument\n");
+                continue;
+            }
+        }
+        else
+        {
+            printf("Function not found\n");
+            continue;
+        }
+
+        write(fd_write, &msg, sizeof(msg));
         read(fd_read, response_str, 100);
         printf("result: %s\n", response_str);
     }
