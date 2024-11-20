@@ -24,7 +24,7 @@ int main()
     message_type msg;
 
     fd_read = fdread(fd_read);
-    fd_write = fdwrite(fd_write);
+    fd_write = fdwrite(fd_write + 1);
 
     // Load the shared library
     lib = dlopen("./funcs.so", RTLD_LAZY);

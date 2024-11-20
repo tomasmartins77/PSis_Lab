@@ -3,71 +3,71 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <fcntl.h>  
- #include <ctype.h> 
- #include <stdlib.h>
- 
+#include <fcntl.h>
+#include <ctype.h>
+#include <stdlib.h>
+#include "FIFOUtils.h"
+
+void write_msg(int fd, message_t *m)
+{
+    if (write(fd, m, sizeof(message_t)) <= 0)
+    {
+        perror("Error writing to FIFO");
+        exit(-1);
+    }
+}
 
 int main()
 {
+    int fd;
+    int key;
+    message_t m;
 
+    fd = write_FIFO(FIFO_LOCATION);
 
-   
-    //TODO_4
-    // create and open the FIFO for writing
+    printf("Enter a character: ");
+    key = getchar();
+    m.character = key;
+    m.type = CONNECTION;
 
+    write_msg(fd, &m);
 
-    //TODO_5
-    // read the character from the user
+    initscr();            /* Start curses mode 		*/
+    cbreak();             /* Line buffering disabled	*/
+    keypad(stdscr, TRUE); /* We get F1, F2 etc..		*/
+    noecho();             /* Don't echo() while we do getch */
 
-    // TODO_6
-    // send connection message
-
-
-
-	initscr();			/* Start curses mode 		*/
-	cbreak();				/* Line buffering disabled	*/
-	keypad(stdscr, TRUE);		/* We get F1, F2 etc..		*/
-	noecho();			/* Don't echo() while we do getch */
-
-    
     int ch;
 
-    m.msg_type = 1;
-    int n = 0;
     do
     {
-    	ch = getch();		
-        n++;
+        ch = getch();
+        m.type = MOVEMENT;
         switch (ch)
         {
-            case KEY_LEFT:
-                mvprintw(0,0,"%d Left arrow is pressed", n);
-                break;
-            case KEY_RIGHT:
-                mvprintw(0,0,"%d Right arrow is pressed", n);
-                break;
-            case KEY_DOWN:
-                mvprintw(0,0,"%d Down arrow is pressed", n);
-                break;
-            case KEY_UP:
-                mvprintw(0,0,"%d :Up arrow is pressed", n);
-                break;
-            default:
-                ch = 'x';
-                    break;
+        case KEY_LEFT:
+            m.direction = LEFT;
+            break;
+        case KEY_RIGHT:
+            m.direction = RIGHT;
+            break;
+        case KEY_DOWN:
+            m.direction = DOWN;
+            break;
+        case KEY_UP:
+            m.direction = UP;
+            break;
+        default:
+            m.type = NO_MOVEMENT;
+            break;
         }
-        refresh();			/* Print it on to the real screen */
-        //TODO_9
-        // prepare the movement message
+        refresh(); /* Print it on to the real screen */
 
-        //TODO_10
-        //send the movement message
-        
-    }while(ch != 27);
-    
-    
-  	endwin();			/* End curses mode		  */
+        write_msg(fd, &m);
 
-	return 0;
+    } while (ch != 27);
+
+    endwin(); /* End curses mode		  */
+
+    return 0;
 }
