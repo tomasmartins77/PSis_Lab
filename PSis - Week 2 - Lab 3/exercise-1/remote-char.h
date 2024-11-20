@@ -17,8 +17,6 @@ typedef enum message_type_t
     NO_MOVEMENT,
 } message_type_t;
 
-// TODO_1
-// declaration the struct corresponding to the exchanged messages
 typedef struct
 {
     char character;
@@ -26,8 +24,13 @@ typedef struct
     direction_t direction;
 } message_t;
 
-// TODO_2
-// declaration of the FIFO location
+typedef struct
+{
+    int x;
+    int y;
+    char character;
+} char_info_t;
+
 #define FIFO_LOCATION "/tmp/lab3_fifo"
 
 #endif

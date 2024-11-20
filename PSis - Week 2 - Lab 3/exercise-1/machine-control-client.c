@@ -7,46 +7,48 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <ctype.h>
+#include "FIFOUtils.h"
+
+direction_t random_direction()
+{
+    return random() % 4;
+}
+
+void write_msg(int fd, message_t *m)
+{
+    if (write(fd, m, sizeof(message_t)) <= 0)
+    {
+        perror("Error writing to FIFO");
+        exit(-1);
+    }
+}
 
 int main()
-{	
-     //TODO_4
-	printf("fifo just opened\n");
+{
+    int fd;
+    int key;
+    message_t m;
 
-    //TODO_5
+    fd = write_FIFO(FIFO_LOCATION);
 
-    // TODO_6
+    printf("Enter a character: ");
+    key = getchar();
+    m.character = key;
+    m.type = CONNECTION;
 
-    
+    write_msg(fd, &m);
 
     int sleep_delay;
-    direction_t direction;
-    int n = 0;
+    m.type = MOVEMENT;
     while (1)
     {
-        sleep_delay = random()%700000;
+        sleep_delay = random() % 700000;
         usleep(sleep_delay);
-        direction = random()%4;
-        n++;
-        switch (direction)
-        {
-        case LEFT:
-           printf("%d Going Left   ", n);
-            break;
-        case RIGHT:
-            printf("%d Going Right   ", n);
-           break;
-        case DOWN:
-            printf("%d Going Down   ", n);
-            break;
-        case UP:
-            printf("%d Going Up    ", n);
-            break;
-        }
-        //TODO_9
-        //TODO_10
+
+        m.direction = random_direction();
+
+        write_msg(fd, &m);
     }
 
- 
-	return 0;
+    return 0;
 }

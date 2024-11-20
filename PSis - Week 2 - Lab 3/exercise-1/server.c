@@ -10,10 +10,6 @@
 #include "remote-char.h"
 #define WINDOW_SIZE 15
 
-direction_t random_direction()
-{
-    return random() % 4;
-}
 void new_position(int *x, int *y, direction_t direction)
 {
     switch (direction)
@@ -52,10 +48,34 @@ void receive_msg(int fd, message_t *m)
     }
 }
 
+void create_player(char character, char_info_t *players, int n_players)
+{
+    players[n_players].x = WINDOW_SIZE / 2;
+    players[n_players].y = WINDOW_SIZE / 2;
+    players[n_players].character = character;
+}
+
+int search_player(char_info_t *players, int n_players, char character)
+{
+    for (int i = 0; i < n_players; i++)
+    {
+        if (players[i].character == character)
+        {
+            return i;
+        }
+    }
+}
+
 int main()
 {
     int fd;
+    int n_players = 0;
+    int player_index = 0;
     message_t m;
+    /* information about the characters */
+    char_info_t players[10];
+    char_info_t current_player;
+    direction_t direction;
 
     fd = read_FIFO(FIFO_LOCATION);
 
@@ -70,40 +90,33 @@ int main()
     box(my_win, 0, 0);
     wrefresh(my_win);
 
-    /* information about the character */
-    int ch;
-    int pos_x;
-    int pos_y;
-
-    direction_t direction;
-
     while (1)
     {
         receive_msg(fd, &m);
 
         if (m.type == CONNECTION)
         {
-            ch = m.character;
-            pos_x = WINDOW_SIZE / 2;
-            pos_y = WINDOW_SIZE / 2;
+            create_player(m.character, players, n_players);
+            current_player = players[n_players];
+            n_players++;
         }
-
-        // TODO_11
-        // process the movement message
-        if (m.type == MOVEMENT)
+        else if (m.type == MOVEMENT)
         {
             direction = m.direction;
-            wmove(my_win, pos_x, pos_y);
+            player_index = search_player(players, n_players, m.character);
+            current_player = players[player_index];
+            wmove(my_win, current_player.x, current_player.y);
             waddch(my_win, ' ');
-            new_position(&pos_x, &pos_y, direction);
+            new_position(&current_player.x, &current_player.y, direction);
+            players[player_index] = current_player;
         }
 
         /* draw mark on new position */
-        wmove(my_win, pos_x, pos_y);
-        waddch(my_win, ch | A_BOLD);
+        wmove(my_win, current_player.x, current_player.y);
+        waddch(my_win, current_player.character | A_BOLD);
         wrefresh(my_win);
     }
-    endwin(); /* End curses mode		  */
+    endwin(); /* End curses mode */
 
     return 0;
 }
