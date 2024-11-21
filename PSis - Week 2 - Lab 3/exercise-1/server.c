@@ -48,14 +48,21 @@ void receive_msg(int fd, message_t *m)
     }
 }
 
-void create_player(char character, char_info_t *players, int n_players)
+void update_window(WINDOW *my_win, int x, int y, char character)
+{
+    wmove(my_win, x, y);
+    waddch(my_win, character);
+}
+
+void create_player(char character, player_t *players, int n_players, WINDOW *my_win)
 {
     players[n_players].x = WINDOW_SIZE / 2;
     players[n_players].y = WINDOW_SIZE / 2;
     players[n_players].character = character;
+    update_window(my_win, players[n_players].x, players[n_players].y, character | A_BOLD);
 }
 
-int search_player(char_info_t *players, int n_players, char character)
+int search_player(player_t *players, int n_players, char character)
 {
     for (int i = 0; i < n_players; i++)
     {
@@ -66,6 +73,21 @@ int search_player(char_info_t *players, int n_players, char character)
     }
 }
 
+void handle_movement(message_t m, player_t *players, int n_players, WINDOW *my_win)
+{
+    int player_index = search_player(players, n_players, m.character);
+    player_t *current_player = &players[player_index];
+    update_window(my_win, current_player->x, current_player->y, ' '); // remove mark from old position
+    new_position(&current_player->x, &current_player->y, m.direction);
+    update_window(my_win, current_player->x, current_player->y, current_player->character | A_BOLD); // draw mark on new position
+}
+
+void handle_connection(message_t m, player_t *players, int *n_players, WINDOW *my_win)
+{
+    create_player(m.character, players, *n_players, my_win);
+    *n_players += 1;
+}
+
 int main()
 {
     int fd;
@@ -73,8 +95,7 @@ int main()
     int player_index = 0;
     message_t m;
     /* information about the characters */
-    char_info_t players[10];
-    char_info_t current_player;
+    player_t players[10];
     direction_t direction;
 
     fd = read_FIFO(FIFO_LOCATION);
@@ -96,24 +117,12 @@ int main()
 
         if (m.type == CONNECTION)
         {
-            create_player(m.character, players, n_players);
-            current_player = players[n_players];
-            n_players++;
+            handle_connection(m, players, &n_players, my_win);
         }
         else if (m.type == MOVEMENT)
         {
-            direction = m.direction;
-            player_index = search_player(players, n_players, m.character);
-            current_player = players[player_index];
-            wmove(my_win, current_player.x, current_player.y);
-            waddch(my_win, ' ');
-            new_position(&current_player.x, &current_player.y, direction);
-            players[player_index] = current_player;
+            handle_movement(m, players, n_players, my_win);
         }
-
-        /* draw mark on new position */
-        wmove(my_win, current_player.x, current_player.y);
-        waddch(my_win, current_player.character | A_BOLD);
         wrefresh(my_win);
     }
     endwin(); /* End curses mode */

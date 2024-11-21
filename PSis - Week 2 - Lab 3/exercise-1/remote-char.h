@@ -29,7 +29,7 @@ typedef struct
     int x;
     int y;
     char character;
-} char_info_t;
+} player_t;
 
 #define FIFO_LOCATION "/tmp/lab3_fifo"
 
