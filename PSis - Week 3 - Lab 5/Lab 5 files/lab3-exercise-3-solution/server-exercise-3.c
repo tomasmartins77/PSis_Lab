@@ -6,6 +6,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <stdlib.h>
+#include <string.h>
 #include <zmq.h>
 #include <assert.h>
 
@@ -74,12 +75,11 @@ int main()
     int fd;
 
     void *context = zmq_ctx_new();
-    void *subscriber = zmq_socket(context, ZMQ_SUB);
-    zmq_connect(subscriber, "tcp://localhost:5556");
-    zmq_setsockopt(subscriber, ZMQ_SUBSCRIBE, "game", 4);
+    void *responder = zmq_socket(context, ZMQ_REP);
+    int rc = zmq_bind(responder, "tcp://*:5555");
 
     void *publisher = zmq_socket(context, ZMQ_PUB);
-    zmq_bind(publisher, "tcp://*:5555");
+    zmq_bind(publisher, "tcp://*:5556");
 
     initscr();
     cbreak();
@@ -100,9 +100,7 @@ int main()
     remote_char_t m;
     while (1)
     {
-        if (zmq_recv(subscriber, &type, 5, 0) == -1)
-            exit(0);
-        if (zmq_recv(subscriber, &m, sizeof(remote_char_t), 0) == -1)
+        if (zmq_recv(responder, &m, sizeof(remote_char_t), 0) == -1)
             exit(0);
         if (m.msg_type == 0)
         {
@@ -115,6 +113,7 @@ int main()
             char_data[n_chars].pos_x = pos_x;
             char_data[n_chars].pos_y = pos_y;
             n_chars++;
+            zmq_send(responder, "OK", 2, 0);
         }
         if (m.msg_type == 1)
         {
@@ -136,17 +135,26 @@ int main()
                 new_position(&pos_x, &pos_y, direction);
                 char_data[ch_pos].pos_x = pos_x;
                 char_data[ch_pos].pos_y = pos_y;
+                zmq_send(responder, "OK", 2, 0);
             }
         }
-        zmq_send(publisher, "display", 7, ZMQ_SNDMORE);
+        if (m.msg_type == 2)
+        {
+            zmq_send(responder, "display", 7, 0);
+            continue;
+        }
+
+        zmq_send(publisher, "display\0", 8, ZMQ_SNDMORE);
         zmq_send(publisher, &char_data, sizeof(ch_info_t) * 100, 0);
+
         /* draw mark on new position */
         wmove(my_win, pos_x, pos_y);
         waddch(my_win, ch | A_BOLD);
         wrefresh(my_win);
     }
     endwin(); /* End curses mode		  */
-    zmq_close(subscriber);
+    zmq_close(responder);
+    zmq_close(publisher);
     zmq_ctx_destroy(context);
     return 0;
 }

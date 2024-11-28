@@ -12,8 +12,8 @@
 int main()
 {
     void *context = zmq_ctx_new();
-    void *publisher = zmq_socket(context, ZMQ_PUB);
-    zmq_bind(publisher, "tcp://*:5556");
+    void *requester = zmq_socket(context, ZMQ_REQ);
+    zmq_connect(requester, "tcp://localhost:5555");
 
     // TODO_5
     //  read the character from the user
@@ -30,8 +30,10 @@ int main()
     remote_char_t m;
     m.msg_type = 0;
     m.ch = ch;
-    zmq_send(publisher, "game", 5, ZMQ_SNDMORE);
-    zmq_send(publisher, &m, sizeof(remote_char_t), 0);
+
+    zmq_send(requester, &m, sizeof(remote_char_t), 0);
+    char response[2];
+    zmq_recv(requester, response, sizeof(response), 0);
 
     initscr();            /* Start curses mode 		*/
     cbreak();             /* Line buffering disabled	*/
@@ -86,8 +88,8 @@ int main()
         // send the movement message
         if (key != 'x')
         {
-            zmq_send(publisher, "game", 4, ZMQ_SNDMORE);
-            zmq_send(publisher, &m, sizeof(remote_char_t), 0);
+            zmq_send(requester, &m, sizeof(remote_char_t), 0);
+            zmq_recv(requester, response, sizeof(response), 0);
         }
         refresh(); /* Print it on to the real screen */
     } while (key != 27);
