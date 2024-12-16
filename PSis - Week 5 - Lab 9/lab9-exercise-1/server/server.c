@@ -144,22 +144,20 @@ int main()
             //          get the message buffer with zmq_msg_data
             //          get the C message structure with the payperview_req__unpack
             int msg_len = zmq_recvmsg(responder, &zmq_msg, 0);
-            // TODO 3
             void *msg_data = zmq_msg_data(&zmq_msg);
             req = payperview_req__unpack(NULL, msg_len, msg_data);
 
             // VERIFY if CC correct
-            if (strcmp(req->credit_card_number, "999123222222") != 0)
-            {
-                // TODO 4 –  send the reply as a protocol buffer payperview_resp message
-                resp.secret = random_secret;
-                size_t resp_size = payperview_resp__get_packed_size(&resp);
-                void *resp_buf = malloc(resp_size);
-                payperview_resp__pack(&resp, resp_buf);
-                zmq_send(responder, resp_buf, resp_size, 0);
-                free(resp_buf);
-                continue;
-            }
+
+            // TODO 4 –  send the reply as a protocol buffer payperview_resp message
+            resp.secret = random_secret;
+            size_t resp_size = payperview_resp__get_packed_size(&resp);
+            void *resp_buf = malloc(resp_size);
+            payperview_resp__pack(&resp, resp_buf);
+
+            zmq_send(responder, resp_buf, resp_size, 0);
+            free(resp_buf);
+            continue;
         }
         if (msg_type == 0)
         {
@@ -170,6 +168,7 @@ int main()
 
             pos_x = WINDOW_SIZE / 2;
             pos_y = WINDOW_SIZE / 2;
+            ch = client_req->client_id;
 
             char_data[n_chars].ch = client_req->client_id;
             char_data[n_chars].pos_x = pos_x;

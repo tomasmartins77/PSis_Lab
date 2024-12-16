@@ -5,6 +5,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <string.h>
 #include <stdlib.h>
 #include <zmq.h>
 #include "zhelpers.h"
@@ -35,12 +36,13 @@ BallDrawDisplayMsg *zmq_read_BallDrawDisplayMsg(void *subscriber)
 int main()
 {
     PayperviewResp *resp;
+    PayperviewReq req = PAYPERVIEW_REQ__INIT;
     char cc_str[100];
     char client_name[100];
 
-    printf("you is your name");
+    printf("What is your name: ");
     fgets(client_name, 100, stdin);
-    printf("you is your credit_card_name");
+    printf("What is your credit_card_name: ");
     fgets(cc_str, 100, stdin);
 
     ch_info_t char_data[100];
@@ -54,6 +56,9 @@ int main()
     zmq_msg_t zmq_msg;
     zmq_msg_init(&zmq_msg);
 
+    int msg_type = 2;
+    zmq_send(requester, &msg_type, sizeof(msg_type), ZMQ_SNDMORE);
+
     // TODO 2 - send the name and credit card to the server using protocol buffers
     //         create a C structure of type PayperviewReq + PAYPERVIEW_RESP__INIT
     //         fill the C structure with the datapayperview_req__get_packed_size)
@@ -61,9 +66,9 @@ int main()
     //         pack the C structure (payperview_req__pack) into the buffer
 
     // TODO 2
-    PayperviewReq req = PAYPERVIEW_REQ__INIT;
-    req.client_name = "Joao Silva";
-    req.credit_card_number = "999123222222";
+
+    req.client_name = client_name;
+    req.credit_card_number = cc_str;
 
     size_t req_size = payperview_req__get_packed_size(&req);
     char *req_buf = malloc(req_size);
@@ -76,7 +81,6 @@ int main()
     int msg_len = zmq_recvmsg(requester, &zmq_msg, 0);
     void *msg_data = zmq_msg_data(&zmq_msg);
     resp = payperview_resp__unpack(NULL, msg_len, msg_data);
-    printf("secret %d\n", resp->secret);
 
     void *subscriber = zmq_socket(context, ZMQ_SUB);
     zmq_connect(subscriber, "tcp://localhost:55556");
@@ -101,7 +105,6 @@ int main()
     BallDrawDisplayMsg *pb_m_stuct;
     while (1)
     {
-
         zmq_recv(subscriber, &random_secret, sizeof(random_secret), 0);
 
         pb_m_stuct = zmq_read_BallDrawDisplayMsg(subscriber);

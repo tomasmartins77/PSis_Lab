@@ -353,7 +353,7 @@ static const ProtobufCFieldDescriptor payperview_resp__field_descriptors[1] =
     "secret",
     1,
     PROTOBUF_C_LABEL_REQUIRED,
-    PROTOBUF_C_TYPE_UINT32,
+    PROTOBUF_C_TYPE_INT32,
     0,   /* quantifier_offset */
     offsetof(PayperviewResp, secret),
     NULL,

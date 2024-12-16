@@ -61,7 +61,7 @@ struct  _PayperviewReq
 struct  _PayperviewResp
 {
   ProtobufCMessage base;
-  uint32_t secret;
+  int32_t secret;
 };
 #define PAYPERVIEW_RESP__INIT \
  { PROTOBUF_C_MESSAGE_INIT (&payperview_resp__descriptor) \

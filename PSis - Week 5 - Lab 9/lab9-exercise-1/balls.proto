@@ -18,7 +18,7 @@ message payperview_req {
 // TODO 1 - define a message (payperview_resp) with the 
 //         secret to the remote-display-client
 message payperview_resp {
-    required uint32 secret = 1;
+    required int32 secret = 1;
 }
 
 
